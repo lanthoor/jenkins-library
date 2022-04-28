@@ -257,8 +257,8 @@ func mergeEvents(t *testing.T, event1, event2 ans.Event) ans.Event {
 	return event1
 }
 
-type ansMock struct{
-	a *ans.ANS
+type ansMock struct {
+	a   *ans.ANS
 	event    ans.Event
 	checkErr error
 }
