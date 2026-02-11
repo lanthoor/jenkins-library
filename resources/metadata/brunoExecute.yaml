@@ -1,0 +1,235 @@
+metadata:
+  name: brunoExecute
+  description: Installs Bruno CLI and executes specified Bruno API collections.
+  longDescription: |
+    This script executes [Bruno](https://www.usebruno.com/) API tests from a collection via the [Bruno CLI](https://docs.usebruno.com/bru-cli/overview) command line tool.
+spec:
+  inputs:
+    resources:
+      - name: tests
+        type: stash
+    params:
+      - name: brunoCollection
+        description: Path to the Bruno collection directory (containing bruno.json).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+        mandatory: true
+      - name: runOptions
+        description: The Bruno CLI run options. Supports Go templating with variables like {{.BrunoCollection}} and {{.CollectionDisplayName}}.
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: "[]string"
+        default:
+          - run
+          - "{{.BrunoCollection}}"
+          - --reporter-junit
+          - target/bruno/TEST-{{.CollectionDisplayName}}.xml
+          - --reporter-html
+          - target/bruno/TEST-{{.CollectionDisplayName}}.html
+      - name: brunoInstallCommand
+        description: The shell command to install Bruno CLI.
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+        default: npm install @usebruno/cli --global --quiet
+      - name: brunoEnvironment
+        description: Bruno environment name to use for the collection run (--env).
+        longDescription: see also [Bruno CLI docs](https://docs.usebruno.com/bru-cli/commandOptions)
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+      - name: brunoGlobalEnv
+        description: Bruno global/workspace-level environment name (--global-env).
+        longDescription: see also [Bruno CLI docs](https://docs.usebruno.com/bru-cli/commandOptions)
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+      - name: envVars
+        description: Environment variable overrides in key=value format (--env-var). Can be specified multiple times.
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: "[]string"
+      - name: envFile
+        description: Path to environment file (.bru or .json) to use for the collection run (--env-file).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+      - name: failOnError
+        description: Defines the behavior in case tests fail. When set to true, the step will fail if any test fails.
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: bool
+        default: true
+      - name: recursive
+        description: Run requests recursively in subdirectories (-r).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: bool
+        default: false
+      - name: bail
+        description: Stop execution after a failure of a request, test, or assertion (--bail).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: bool
+        default: false
+      - name: parallel
+        description: Run requests in parallel (--parallel). Default is sequential execution.
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: bool
+        default: false
+      - name: sandboxMode
+        description: JavaScript sandbox mode - "safe" (default) or "developer" (--sandbox).
+        longDescription: |
+          Starting from Bruno CLI v3.0.0, the default runtime mode is Safe Mode for improved security.
+          If you need Developer Mode features (external npm packages, filesystem access),
+          set this to "developer".
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+        default: safe
+      - name: csvFilePath
+        description: Path to CSV file for data-driven testing (--csv-file-path).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+      - name: jsonFilePath
+        description: Path to JSON data file for data-driven testing (--json-file-path).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+      - name: iterationCount
+        description: Number of times to run the collection (--iteration-count).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: int
+        default: 0
+      - name: tags
+        description: Only run requests that have ALL of the specified tags, comma-separated (--tags).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+      - name: excludeTags
+        description: Skip requests that have ANY of the specified tags, comma-separated (--exclude-tags).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+      - name: testsOnly
+        description: Only run requests that have tests or active assertions (--tests-only).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: bool
+        default: false
+      - name: reporterJson
+        description: Path to generate a JSON report (--reporter-json).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+      - name: reporterJunit
+        description: Path to generate a JUnit report (--reporter-junit). Supports Go templating.
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+      - name: reporterHtml
+        description: Path to generate an HTML report (--reporter-html). Supports Go templating.
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: string
+      - name: reporterSkipAllHeaders
+        description: Skip all headers in the report (--reporter-skip-all-headers).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: bool
+        default: false
+      - name: reporterSkipHeaders
+        description: Skip specific headers in the report (--reporter-skip-headers).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: "[]string"
+      - name: delay
+        description: Delay between each request in milliseconds (--delay).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: int
+        default: 0
+      - name: insecure
+        description: Allow insecure server connections (--insecure).
+        scope:
+          - PARAMETERS
+          - STAGES
+          - STEPS
+        type: bool
+        default: false
+  outputs:
+    resources:
+      - name: influx
+        type: influx
+        params:
+          - name: step_data
+            fields:
+              - name: bruno
+                type: bool
+      - name: reports
+        type: reports
+        params:
+          - filePattern: "**/TEST-*.xml"
+            type: acceptance-test
+          - filePattern: "**/TEST-*.html"
+            type: acceptance-test
+          - filePattern: "**/requirement.mapping"
+            type: requirement-mapping
+          - filePattern: "**/delivery.mapping"
+            type: delivery-mapping
+  containers:
+    - name: bruno
+      image: node:24-bookworm
+      workingDir: /home/node
